@@ -39,6 +39,10 @@ def show_messagebox(title, message):
     main_window = tk.Tk()
     main_window.overrideredirect(1)
 
+    main_window.call("wm", "attributes", ".", "-topmost", "true")
+    main_window.attributes('-alpha', 0.8)
+    main_window.config(bg="black")
+
     main_frame = tk.Frame(main_window)
     main_frame.configure(bg="black")
     main_frame.pack()
@@ -79,10 +83,8 @@ def show_messagebox(title, message):
     # Smooth entry
     width = 0
     while width < least_width:
-        main_window.call("wm", "attributes", ".", "-topmost", "true")
         main_window.geometry("{}x{}-0-40".format(width, least_height))
-        main_window.attributes('-alpha', 0.8)
-        main_window.config(bg="black")
+
         main_window.update()
         main_window.update_idletasks()
         width += 20
