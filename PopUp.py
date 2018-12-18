@@ -9,6 +9,15 @@ except ImportError:
 import multiprocessing as mp
 import sys
 from time import sleep
+import ctypes
+
+
+# User32.dll
+if getattr(ctypes, "windll", False):
+    User32 = ctypes.windll.User32
+else:
+    User32 = None
+LOG_FILE_NAME = "Log-PopUpNotification.log"
 
 
 def get_dimension_using_Tk(root, default_placing_manager,
@@ -46,7 +55,7 @@ def show_messagebox(title, message):
 
     main_frame = tk.Frame(main_window)
     main_frame.configure(bg="black")
-    main_frame.pack()
+    main_frame.grid()
 
     all_lines = []
 
@@ -71,6 +80,7 @@ def show_messagebox(title, message):
     line_height = FONT_SIZE * 1.50
     all_lines_height = int(number_of_lines * line_height)
     all_lines_height += 2 * PAD_Y
+    all_lines_height += 10
 
     least_width = 400
     least_height = 65
@@ -91,14 +101,14 @@ def show_messagebox(title, message):
         width += 20
 
     title_label =\
-        tk.Label(main_frame, text=title, bg="black", fg="silver",
+        tk.Label(main_window, text=title, bg="black", fg="silver",
                  font=("Times New Roman", FONT_SIZE))
     # title_label.configure(anchor="w")
     title_label.grid(row=0, column=0, padx=PAD_X-5, pady=PAD_Y+5, sticky="W")
     # title_label.pack(padx=20)
 
     message_label =\
-        tk.Label(main_frame, text=message, bg="black", fg="grey",
+        tk.Label(main_window, text=message, bg="black", fg="grey",
                  font=("Times New Roman", FONT_SIZE))
     message_label.configure(anchor="center")
     message_label.grid(row=2, column=0, padx=PAD_X, pady=PAD_Y)
@@ -107,12 +117,26 @@ def show_messagebox(title, message):
     main_window.mainloop()
 
 
-def show_notification(title, message, SECONDS=3):
+def show_notification(title, message, SECONDS=3, is_daemon=True, LOG=False):
+    # Check if user is not locked
+    if User32 is not None:
+        while User32.GetForegroundWindow() == 0:
+            sleep(5)
+
+    if LOG:
+        f = open(LOG_FILE_NAME, "a")
+        f.write("####START_ENTRY####\n")
+        f.write(title)
+        f.write("\n")
+        f.write(message)
+        f.write("####END_ENTRY####\n")
+        f.close()
     box_process = mp.Process(target=show_messagebox, args=(title, message))
+    box_process.daemon = is_daemon
     box_process.start()
     sleep(SECONDS)
     box_process.terminate()
 
 
-if getattr(sys, 'frozen', False):
+if getattr(sys, "frozen", False):
     mp.freeze_support()
